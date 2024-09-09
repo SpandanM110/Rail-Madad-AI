@@ -5,6 +5,10 @@ import Markdown from "react-markdown";
 import { useState, useEffect, useRef } from "react";
 import { Send, Trash } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from 'next/router';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const categoryContactMap = {
   cleanliness: {
@@ -41,6 +45,7 @@ function categorizeAndRoute(message) {
 }
 
 const ChatArea = () => {
+  const router = useRouter();
   const messagesEndRef = useRef(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,6 +79,8 @@ const ChatArea = () => {
   }, [chat, model]);
 
   async function chatting() {
+    if (!input.trim()) return;
+
     setLoading(true);
     setHistory((oldHistory) => [
       ...oldHistory,
@@ -83,116 +90,118 @@ const ChatArea = () => {
     setInput("");
 
     try {
-      // Add general conversation responses
       const lowerInput = input.toLowerCase();
       if (lowerInput.includes("hello") || lowerInput.includes("hi")) {
         setHistory((oldHistory) => [
-          ...oldHistory,
+          ...oldHistory.slice(0, -1),
           { role: "model", parts: "Hello! How can I assist you today?" },
         ]);
-        setLoading(false);
         return;
       }
 
       if (lowerInput.includes("hours") || lowerInput.includes("working hours")) {
         setHistory((oldHistory) => [
-          ...oldHistory,
+          ...oldHistory.slice(0, -1),
           { role: "model", parts: "Our support team is available 24/7 to assist you." },
         ]);
-        setLoading(false);
         return;
       }
 
       if (lowerInput.includes("location") || lowerInput.includes("address")) {
         setHistory((oldHistory) => [
-          ...oldHistory,
+          ...oldHistory.slice(0, -1),
           { role: "model", parts: "Our office is located at 1234 Train Avenue, Transit City." },
         ]);
-        setLoading(false);
         return;
       }
 
       if (complaintDetails.id) {
-        // Handle case where details are provided
-        const details = input.split(",").map(detail => detail.trim());
-        if (details.length === 5) {
-          const [seat, coach, train, name, phone] = details;
-          setComplaintDetails((prev) => ({
-            ...prev,
-            seatNumber: seat,
-            coachNumber: coach,
-            trainName: train,
-            userName: name,
-            userPhone: phone,
-          }));
-
-          const summary = `
-            Your complaint details:
-            - Complaint ID: ${complaintDetails.id}
-            - Seat Number: ${seat}
-            - Coach Number: ${coach}
-            - Train Name: ${train}
-            - Name: ${name}
-            - Phone Number: ${phone}
-            - Contact Number: ${complaintDetails.contactNumber}
-          `;
-
-          setHistory((oldHistory) => [
-            ...oldHistory,
-            { role: "model", parts: `Thank you for providing the details. ${summary}` },
-          ]);
-        } else {
-          setHistory((oldHistory) => [
-            ...oldHistory,
-            { role: "model", parts: "Please provide the details in the format: Seat Number, Coach Number, Train Name, Your Name, Your Phone Number." },
-          ]);
-        }
+        handleComplaintDetails(input);
       } else {
-        // Handle new complaint
-        const { category, contactNumber } = categorizeAndRoute(input);
-        const complaintID = Math.random().toString(36).substr(2, 9);
-
-        setComplaintDetails({ id: complaintID, category, contactNumber });
-
-        const acknowledgment = `
-          Thank you for reaching out. Your complaint has been categorized as "${category}". 
-          We have assigned a complaint ID: ${complaintID}. 
-          To assist you better, could you please provide the following details?
-          1. Seat Number
-          2. Coach Number
-          3. Train Name
-          4. Your Name
-          5. Your Phone Number
-          
-          This will help us link your issue with the complaint ID. 
-          In the meantime, if you need immediate assistance, you can contact our ${category} support team at: ${contactNumber}. 
-          Your satisfaction is important to us, and we're here to help!
-        `;
-
-        setHistory((oldHistory) => [
-          ...oldHistory,
-          { role: "model", parts: acknowledgment },
-        ]);
+        handleNewComplaint(input);
       }
     } catch (error) {
-      setHistory((oldHistory) => {
-        const newHistory = oldHistory.slice(0, oldHistory.length - 1);
-        newHistory.push({
-          role: "model",
-          parts: "Oops! Something went wrong. Please try again later or contact our support team directly.",
-        });
-        return newHistory;
-      });
-      setLoading(false);
-      console.log(error);
-      alert("Oops! Something went wrong. Please try again later.");
+      handleError();
     } finally {
       setLoading(false);
     }
   }
 
+  function handleComplaintDetails(input) {
+    const details = input.split(",").map(detail => detail.trim());
+    if (details.length === 5) {
+      const [seat, coach, train, name, phone] = details;
+      setComplaintDetails((prev) => ({
+        ...prev,
+        seatNumber: seat,
+        coachNumber: coach,
+        trainName: train,
+        userName: name,
+        userPhone: phone,
+      }));
+
+      const summary = `
+        Your complaint details:
+        - Complaint ID: ${complaintDetails.id}
+        - Seat Number: ${seat}
+        - Coach Number: ${coach}
+        - Train Name: ${train}
+        - Name: ${name}
+        - Phone Number: ${phone}
+        - Contact Number: ${complaintDetails.contactNumber}
+      `;
+
+      setHistory((oldHistory) => [
+        ...oldHistory.slice(0, -1),
+        { role: "model", parts: `Thank you for providing the details. ${summary}` },
+      ]);
+    } else {
+      setHistory((oldHistory) => [
+        ...oldHistory.slice(0, -1),
+        { role: "model", parts: "Please provide the details in the format: Seat Number, Coach Number, Train Name, Your Name, Your Phone Number." },
+      ]);
+    }
+  }
+
+  function handleNewComplaint(input) {
+    const { category, contactNumber } = categorizeAndRoute(input);
+    const complaintID = Math.random().toString(36).substr(2, 9);
+
+    setComplaintDetails({ id: complaintID, category, contactNumber });
+
+    const acknowledgment = `
+      Thank you for reaching out. Your complaint has been categorized as "${category}". 
+      We have assigned a complaint ID: ${complaintID}. 
+      To assist you better, could you please provide the following details?
+      1. Seat Number
+      2. Coach Number
+      3. Train Name
+      4. Your Name
+      5. Your Phone Number
+      
+      This will help us link your issue with the complaint ID. 
+      In the meantime, if you need immediate assistance, you can contact our ${category} support team at: ${contactNumber}. 
+      Your satisfaction is important to us, and we're here to help!
+    `;
+
+    setHistory((oldHistory) => [
+      ...oldHistory.slice(0, -1),
+      { role: "model", parts: acknowledgment },
+    ]);
+  }
+
+  function handleError() {
+    setHistory((oldHistory) => [
+      ...oldHistory.slice(0, -1),
+      { role: "model", parts: "Oops! Something went wrong. Please try again later or contact our support team directly." },
+    ]);
+    console.log(error);
+    alert("Oops! Something went wrong. Please try again later.");
+  }
+
   function handleKeyDown(e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       chatting();
     }
   }
@@ -210,66 +219,47 @@ const ChatArea = () => {
   }
 
   return (
-    <div className="relative flex px-2 justify-center max-w-3xl min-h-dvh w-full pt-6 bg-gray-900 rounded-t-3xl max-h-screen shadow shadow-slate-900">
-      <div className="flex text-sm md:text-base flex-col pt-10 pb-16 w-full flex-grow flex-1 rounded-3xl shadow-md overflow-y-auto">
+    <div className="flex flex-col h-screen bg-gray-100">
+      <div className="flex-grow overflow-y-auto p-4">
         {history.map((item, index) => (
           <div
             key={index}
-            className={`chat ${
-              item.role === "model" ? "chat-start" : "chat-end"
-            }`}
+            className={`flex ${
+              item.role === "model" ? "justify-start" : "justify-end"
+            } mb-4`}
           >
-            <div className="chat-image avatar">
-              <div className="w-6 md:w-10 rounded-full">
-                <Image
-                  alt="Avatar"
-                  src={item.role === "model" ? "/geminis.jpeg" : "/user.jpg"}
-                  width={50}
-                  height={50}
-                />
+            <div className={`flex ${item.role === "model" ? "flex-row" : "flex-row-reverse"} items-start max-w-[80%]`}>
+              <Avatar className="w-8 h-8 mr-2">
+                <AvatarImage src={item.role === "model" ? "/geminis.jpeg" : "/user.jpg"} alt="Avatar" />
+                <AvatarFallback>{item.role === "model" ? "RM" : "U"}</AvatarFallback>
+              </Avatar>
+              <div className={`rounded-lg p-3 ${item.role === "model" ? "bg-blue-100" : "bg-green-100"}`}>
+                <p className="text-sm font-semibold mb-1">{item.role === "model" ? "Rail Madad" : "You"}</p>
+                <Markdown className="text-sm">{item.parts}</Markdown>
               </div>
-            </div>
-            <div className="chat-header mx-2 font-semibold opacity-80">
-              {item.role === "model" ? "Rail Madad" : "You"}
-            </div>
-            <div
-              className={`chat-bubble font-medium ${
-                item.role === "model" ? "chat-bubble-primary" : ""
-              }`}
-            >
-              <Markdown>{item.parts}</Markdown>
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="absolute px-2 bottom-2 w-full flex gap-1">
-        <button
-          className="btn btn-outline shadow-md btn-error rounded-3xl backdrop-blur"
-          title="Reset"
-          onClick={reset}
-        >
-          <Trash />
-        </button>
-        <textarea
-          type="text"
-          value={input}
-          required
-          rows={1}
-          onKeyDown={handleKeyDown}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Describe your issue..."
-          className="textarea backdrop-blur textarea-primary w-full rounded-3xl shadow-md border-2 border-gray-400 resize-none"
-        />
-        <button
-          className="btn btn-primary btn-outline shadow-md rounded-3xl backdrop-blur"
-          onClick={chatting}
-          title="Send"
-          disabled={loading}
-        >
-          <Send />
-        </button>
+      <div className="p-4 bg-white border-t">
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="icon" onClick={reset} className="shrink-0">
+            <Trash className="h-4 w-4" />
+          </Button>
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe your issue..."
+            className="flex-grow"
+            rows={1}
+          />
+          <Button onClick={chatting} disabled={loading} className="shrink-0">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
