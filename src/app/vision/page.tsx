@@ -3,8 +3,8 @@ import ImageVision from "@/components/ImageVision";
 import { Metadata } from "next";
 
 export const metadata:Metadata = {
-  title: "Gemini Vision",
-  description: "Gemini Vision AI",
+  title: "Rail Vision",
+  description: "Rail Vision AI",
 };
 
 const page = () => {

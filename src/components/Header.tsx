@@ -7,7 +7,7 @@ interface Props {
 
 const Header = ({ name }: Props) => {
   return (
-    <div className="position fixed top-2 w-full z-10 ">
+    <div className="fixed top-2 w-full z-10 flex justify-center items-center">
       <h1 className="text-2xl md:text-4xl font-semibold bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-400 text-center bg-clip-text text-transparent px-4 py-1 rounded-full border w-fit mx-auto border-slate-500/60 backdrop-blur shadow-md">
         Rail {name}{" "}
         {name === "Madad" ? (
@@ -17,6 +17,13 @@ const Header = ({ name }: Props) => {
         )}
         ✨
       </h1>
+      <a
+        href="http://184.72.131.74:8088" // Replace with your desired link
+      >
+        <button className="ml-4 px-4 py-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition-colors">
+          Services
+        </button>
+      </a>
     </div>
   );
 };
