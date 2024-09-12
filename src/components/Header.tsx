@@ -17,13 +17,7 @@ const Header = ({ name }: Props) => {
         )}
         ✨
       </h1>
-      <a
-        href="http://184.72.131.74:8088" // Replace with your desired link
-      >
-        <button className="ml-4 px-4 py-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition-colors">
-          Services
-        </button>
-      </a>
+     
     </div>
   );
 };
