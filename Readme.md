@@ -1,7 +1,4 @@
-Here's a README file that incorporates the details of your project and its purpose:
-
----
-
+## SIH: RAIL-MADAD-AI
 # ImageVision - Visual Data Interpretation AI System
 
 **ImageVision** is an AI-powered system that utilizes Google Generative AI for visual data interpretation. By allowing users to upload images and ask questions about them, the system dynamically responds with insightful information using the **Gemini API**. This project is designed to help users quickly and accurately interpret visual data, providing efficient solutions to their queries.
